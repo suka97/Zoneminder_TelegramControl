@@ -72,6 +72,7 @@ if ( !is_null($hook['message']) ) {
                 zm_changeMonitorStatus($zm_token, ZM_MODE_ON);
                 tel_sendMessage('Alarma activada', $chat_id);
                 db_setGlobal('zm_schedule_start', '');
+                db_setGlobal('zm_last_time', date('Y-m-d H:i:s', time()));
             }
             else {
                 tel_sendMessage('Alarma ya activa', $chat_id);
@@ -79,7 +80,7 @@ if ( !is_null($hook['message']) ) {
             break;
         case '/desactivar':
             $zm_token = zm_getToken();
-            $time = strtotime('+720 miunute');
+            $time = strtotime('+720 minute');
             if ( count($args) == 2 ) {
                 $time = strtotime($args[1].' minute');
                 if ( $time === false ) {
@@ -96,7 +97,6 @@ if ( !is_null($hook['message']) ) {
             else {
                 tel_sendMessage('Alarma ya inactiva', $chat_id);
             }
-            break;
             break;
         case '/agregar_user':
             if ( count($args) != 2 ) {
@@ -177,6 +177,14 @@ if ( !is_null($hook['message']) ) {
             tel_sendMessage('Alarma State Changed to '.$state, $chat_id);
             // $command = escapeshellcmd('./alarma.py');
             // shell_exec($command);
+            break;
+        case '/zip_all_events':
+            $zm_token = zm_getToken();
+            $events = zm_getAllEvents_NotArchived($zm_token);
+            tel_sendMessage('Ziping events...', $chat_id);
+            sendOkAndContinue();
+            zm_zipEventsSnapshots($events, 'events.zip');
+            tel_sendMessage('Events ziped OK', $chat_id);
             break;
         default:
             tel_sendMessage('Comando invalido', $chat_id);

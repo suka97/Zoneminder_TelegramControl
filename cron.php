@@ -21,8 +21,9 @@ if( $zm_monitor['Monitor_Status']['Status'] != $zm_last_monitor_status ) {
 if ( $zm_schedule_start != '' ) {
     if ( strtotime('now') >= $zm_schedule_start ) {
         zm_changeMonitorStatus($zm_access_token, ZM_MODE_ON);
-        for ( $i=0 ; $i<count($alert_chats) ; $i++ ) tel_sendMessage('Alarma activada', $alert_chats[$i]);
+        // for ( $i=0 ; $i<count($alert_chats) ; $i++ ) tel_sendMessage('Alarma activada', $alert_chats[$i]);
         db_setGlobal('zm_schedule_start', '');
+        db_setGlobal('zm_last_time', date('Y-m-d H:i:s', time()));
     }
 }
 

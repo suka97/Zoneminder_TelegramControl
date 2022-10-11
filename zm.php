@@ -52,6 +52,75 @@ function zm_getEventsBetween($access_token, $start, $stop) {
 }
 
 
+function zm_getAllEvents_NotArchived($access_token) { 
+    $salida = [];
+    $url = 'http://localhost/zm/api/events/index/'.
+        'archived%20=:0'.
+        '.json?sort=StartTime&direction=asc'.
+        '&token='.$access_token;
+
+    // initial request
+    $curl = curl_init();
+    curl_setopt_array($curl, array(
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'GET',
+    ));
+    $response = curl_exec($curl); 
+    $json = json_decode($response, true);
+    $salida = array_merge($salida, $json['events']);
+    $pageCount = $json['pagination']['pageCount'];
+    curl_close($curl);
+
+    //concurrent requests
+    $curl_arr = array();
+    $master = curl_multi_init();
+    for ( $page = 2 ; $page <= $pageCount ; $page++ ) {
+        $curl_arr[] = curl_init();
+        curl_setopt_array($curl_arr[$page-2], array(
+            CURLOPT_URL => $url . '&page='.$page,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'GET',
+        ));
+        array_push($curl_arr, $curl_arr[$page-2]);
+        curl_multi_add_handle($master, $curl_arr[$page-2]);
+    }
+    do {
+        curl_multi_exec($master, $running);
+    } while($running > 0);
+    for ( $page = 2 ; $page <= $pageCount ; $page++ ) {
+        $json = json_decode( curl_multi_getcontent($curl_arr[$page-2]), true);
+        $salida = array_merge($salida, $json['events']);
+    }
+
+    return $salida;
+}
+
+
+function zm_zipEventsSnapshots($events, $zipname) {
+    $zip = new ZipArchive;
+    $zip->open($zipname, ZipArchive::CREATE);
+    foreach ($events as $index=>$e) {
+        $snap = $e['Event']['FileSystemPath'] .'/snapshot.jpg';
+        if ( file_exists($snap) ) {
+            $dirs = explode('/', $e['Event']['FileSystemPath']);
+            $zip->addFile($snap, $dirs[count($dirs)-2].'/'.$dirs[count($dirs)-1].'.jpg');
+        }
+    }
+    $zip->close();
+}
+
+
 function zm_getMonitor($access_token) {
     $curl = curl_init();
     curl_setopt_array($curl, array(
