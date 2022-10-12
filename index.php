@@ -183,8 +183,49 @@ if ( !is_null($hook['message']) ) {
             $events = zm_getAllEvents_NotArchived($zm_token);
             tel_sendMessage('Ziping events...', $chat_id);
             sendOkAndContinue();
-            zm_zipEventsSnapshots($events, 'events.zip');
+            zm_zipEventsSnapshots($events, '/home/ubuntu/telegram/events.zip');
             tel_sendMessage('Events ziped OK', $chat_id);
+            break;
+        case '/eventos_entre':
+            if ( count($args) != 3 ) {
+                tel_sendMessage('Wrong usage', $chat_id);
+                return;
+            }
+            $date_start = str_replace('_', ' ', $args[1]);
+            $date_end = str_replace('_', ' ', $args[2]);
+            if ( $date_start==false || $date_end==false ) {
+                tel_sendMessage('Invalid times', $chat_id);
+                return;
+            }
+            $zm_token = zm_getToken();
+            $events = zm_getEventsBetween($zm_token, $date_start, $date_end, true)['events'];
+            if ( count($events) > 10 ) {
+                tel_sendMessage('Too many events: '.count($events), $chat_id);
+                return;
+            }
+            // foreach ( $events as $e ) { 
+            //     $db_event = db_getZmEvent($e['Event']['Id']);
+            //     if ( $db_event == false ) {
+            //         $tel_video_id = '';
+            //         $tel_snap_id = tel_sendPhoto($e['Event']['FileSystemPath'].'/snapshot.jpg', $chat_id, 'Event '.$e['Event']['Id'].' '.$e['Event']['StartTime']);
+            //         db_addZmEvent(array(
+            //             'id' => $e['Event']['Id'],
+            //             'start_time' => $e['Event']['StartTime'],
+            //             'end_time' => $e['Event']['EndTime'],
+            //             'tl_video_id' => $tel_video_id,
+            //             'tl_snap_id' => $tel_snap_id
+            //         ));
+            //     }
+            //     else {
+            //         tel_sendPhoto($db_event['tl_snap_id'], $chat_id, 'Event '.$e['Event']['Id'].' '.$e['Event']['StartTime'], true);
+            //     }
+            // }
+            $photoGroup = []; $captions = [];
+            foreach ( $events as $e ) { 
+                $photoGroup[] = $e['Event']['FileSystemPath'].'/snapshot.jpg';
+                $captions[] = 'Event '.$e['Event']['Id'].' '.$e['Event']['StartTime'];
+            }
+            tel_sendPhotoGroup($photoGroup, $chat_id, $captions);
             break;
         default:
             tel_sendMessage('Comando invalido', $chat_id);

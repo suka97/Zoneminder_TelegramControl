@@ -28,13 +28,15 @@ function zm_getToken() {
 
 
 //2015-05-15%2018:43:56/   EndTime%20<=:208:43:56
-function zm_getEventsBetween($access_token, $start, $stop) { 
+function zm_getEventsBetween($access_token, $start, $stop, $getNotAlarms=false) { 
+    $filter = '/MonitorId%20=:1' . '/AlarmFrames%20>:0';
+    if ( $getNotAlarms ) $filter = '';
+
     $curl = curl_init();
     $url = 'http://localhost/zm/api/events/index/'.
     'StartTime%20>:' . str_replace(' ', '%20', $start).
     '/EndTime%20<=:' . str_replace(' ', '%20', $stop).
-    '/MonitorId%20=:1'.
-    '/AlarmFrames%20>:0'.
+    $filter.
     '.json?sort=StartTime&direction=asc'.
     '&token=' . $access_token;
     curl_setopt_array($curl, array(
@@ -109,7 +111,7 @@ function zm_getAllEvents_NotArchived($access_token) {
 
 function zm_zipEventsSnapshots($events, $zipname) {
     $zip = new ZipArchive;
-    $zip->open($zipname, ZipArchive::CREATE);
+    $zip->open($zipname, ZipArchive::CREATE | ZipArchive::OVERWRITE);
     foreach ($events as $index=>$e) {
         $snap = $e['Event']['FileSystemPath'] .'/snapshot.jpg';
         if ( file_exists($snap) ) {

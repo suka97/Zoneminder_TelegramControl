@@ -67,6 +67,22 @@ function db_getLastEvent() {
 }
 
 
+function db_getZmEvent($event_id) {
+    $conn = new mysqli(SQL_SERVERNAME, SQL_USER, SQL_PASS, SQL_DBNAME);
+    if ($conn->connect_error) {
+        http_response_code(500); die("error connectSQL: " . $conn->connect_error);
+    } 
+    $sql = 'SELECT * FROM zm_events WHERE id = '.$event_id;
+    $result = $conn->query($sql);
+    if ( $result->num_rows == 0 ) { 
+        return false;     // devuelvo empty array
+    } 
+    $result = $result->fetch_array(MYSQLI_ASSOC);
+    $conn->close();
+    return $result;
+}
+
+
 function db_addZmEvent($event) {
     $conn = new mysqli(SQL_SERVERNAME, SQL_USER, SQL_PASS, SQL_DBNAME);
     if ($conn->connect_error) {

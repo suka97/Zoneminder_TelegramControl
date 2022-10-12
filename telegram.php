@@ -62,3 +62,37 @@ function tel_sendVideo($video_path, $chat_id, $caption='', $no_upload=false) {
     if ( array_key_exists('video', $json) ) return $json['video']['file_id'];
     else return $json['document']['file_id'];
 }
+
+
+function tel_sendPhotoGroup($photoGroup, $chat_id, $captions=null) {
+    $postfields = array('chat_id' => $chat_id, 'media' => []);
+    foreach ( $photoGroup as $index=>$p ) {
+        $media = $p;
+        if ( file_exists($p) ) {
+            $postfields['photo'.$index] = new CURLFILE($p);
+            $media = 'attach://photo'.$index;
+        }
+        $item = [
+            'type' => 'photo',
+            'media' => $media,
+        ];
+        if ( is_array($captions) ) $item['caption'] = $captions[$index];
+        $postfields['media'][] = $item;
+    }
+    $postfields['media'] = json_encode($postfields['media']);
+    $curl = curl_init();
+    curl_setopt_array($curl, array(
+    CURLOPT_URL => 'https://api.telegram.org/bot'.TEL_TOKEN.'/sendMediaGroup',
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_ENCODING => '',
+    CURLOPT_MAXREDIRS => 10,
+    CURLOPT_TIMEOUT => 0,
+    CURLOPT_FOLLOWLOCATION => true,
+    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+    CURLOPT_CUSTOMREQUEST => 'POST',
+    CURLOPT_POSTFIELDS => $postfields,
+    ));
+    $response = curl_exec($curl);
+    curl_close($curl);
+    return json_decode($response, true)['result'];
+}

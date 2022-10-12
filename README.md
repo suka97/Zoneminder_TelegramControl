@@ -9,6 +9,8 @@ Adds telegram control functionality to a Zoneminder's camera such as:
 * /agregar_user: Adds control permissions to a user, taking a second argument as user_id.
 * /agregar_chat: Adds the current chat to the new event reporting list.
 * /borrar_chat: Removes the current chat from the new event reporting list.
+* /zip_all_events: Creates a zip with all events snapshots.
+* /eventos_entre: 2022-10-12_01:00:00 2022-10-12_02:00:00
 
 In addition to the available commands, the scripts also checks for new motion events and alerts the admin users by sending an image with the event_id and length as caption.
 
