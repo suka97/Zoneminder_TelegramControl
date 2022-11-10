@@ -42,7 +42,15 @@ function tel_sendMessage($msg, $chat_id) {
 
 function tel_sendVideo($video_path, $chat_id, $caption='', $no_upload=false) {
     $postfields = array('chat_id' => $chat_id);
-    $postfields['video'] = ($no_upload) ? $video_path : new CURLFILE($video_path);
+    if ( !$no_upload ) {
+        // $video_path = tempnam('/tmp','zm_'.basename($video_path));
+        $tmp_file = '/tmp/zm_'.basename($video_path);
+        shell_exec('ffmpeg -y -i '.$video_path.' -vcodec copy -acodec copy '.$tmp_file);
+        $postfields['video'] = new CURLFILE($tmp_file);
+    }
+    else {
+        $postfields['video'] = $video_path;
+    }
     if ( strlen($caption) > 0 ) $postfields['caption'] = $caption;
     $curl = curl_init();
     curl_setopt_array($curl, array(
@@ -57,6 +65,7 @@ function tel_sendVideo($video_path, $chat_id, $caption='', $no_upload=false) {
     CURLOPT_POSTFIELDS => $postfields,
     ));
     $response = curl_exec($curl);
+    if ( !$no_upload ) unlink($tmp_file);
     curl_close($curl);
     $json = json_decode($response, true)['result'];
     if ( array_key_exists('video', $json) ) return $json['video']['file_id'];

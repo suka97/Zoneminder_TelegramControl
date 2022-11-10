@@ -1,9 +1,9 @@
 <?php
 // sshpass -p "mellamoandres" rsync -v -t -r telegram/*.{php,py} pilar_rasp:~/telegram/
 
-include("telegram.php");
-include("zm.php");
-include("dbSQLs.php");
+include_once("telegram.php");
+include_once("zm.php");
+include_once("dbSQLs.php");
 
 function sendOkAndContinue() {
     // Buffer all upcoming output...
@@ -35,20 +35,21 @@ function get_string_between($string, $start, $end){
 
 
 $hook = json_decode(file_get_contents('php://input'), true);
-// file_put_contents('/var/www/html/telegram/hook.json', json_encode($hook));
+// file_put_contents('/var/www/html/telegram/hook.json', json_encode($hook)."\n", FILE_APPEND);
 
 if ( !is_null($hook['message']) ) {
     $chat_id = $hook['message']['chat']['id'];
+    $user_id = $hook['message']['from']['id'];
 
     if ( is_null($hook['message']['entities'][0]) ) return;
     if ( $hook['message']['entities'][0]['type'] != 'bot_command' ) return;
 
     if ( is_null($hook['message']['from']) ) return;
     if ( $hook['message']['text'] == '/mi_id' ) {
-        tel_sendMessage($hook['message']['from']['id'], $chat_id);
+        tel_sendMessage($user_id, $chat_id);
         return;
     }
-    if ( !db_userExists($hook['message']['from']['id']) ) {
+    if ( !db_userExists($user_id) ) {
         tel_sendMessage('Usuario no habilitado', $chat_id);
         return;
     }
@@ -63,8 +64,9 @@ if ( !is_null($hook['message']) ) {
     $args = explode(" ", $hook['message']['text']);
     switch($args[0]) {
         case '/ver':
-            shell_exec('zmu -m 1 -i -U admin -P mellamoandres');   // guarda en Monito1.jpg
-            tel_sendPhoto('Monitor1.jpg', $chat_id);
+            shell_exec('zmu -m 2 -i -U admin -P mellamoandres');   // guarda en Monitor1.jpg
+            shell_exec('zmu -m 3 -i -U admin -P mellamoandres');   // guarda en Monitor1.jpg
+            tel_sendPhotoGroup(['Monitor2.jpg','Monitor3.jpg'], $chat_id);
             break;
         case '/activar':
             $zm_token = zm_getToken();
@@ -112,7 +114,7 @@ if ( !is_null($hook['message']) ) {
             break;
         case '/agregar_chat':
             if ( !db_chatExists($chat_id) ) {
-                db_addChat($chat_id);
+                db_addChat($chat_id, $user_id);
                 tel_sendMessage('Chat agregado', $chat_id);
             }
             else 

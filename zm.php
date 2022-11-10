@@ -5,6 +5,8 @@ define("ZM_PASS", "mellamoandres");
 define("ZM_MODE_ON", "Modect");     // Modect Mocord
 define("ZM_MODE_OFF", "Monitor");    // Monitor Record
 
+include_once("dbSQLs.php");
+
 function zm_getToken() {
     $curl = curl_init();
     curl_setopt_array($curl, array(
@@ -185,14 +187,16 @@ function zm_eventVideo($access_token, $event_id) {
     $event = zm_getEvent($access_token, $event_id);
     $eventPath = $event['Event']['FileSystemPath'];
     foreach(scandir($eventPath) as $f) {
-        if ( pathinfo($f)['extension'] == 'avi' ) 
-            return $eventPath.'/'.$f;
+        $ext = pathinfo($f)['extension'];
+        if ( $ext == 'mp4' ) return $eventPath.'/'.$f;
+        if ( $ext == 'avi' ) return $eventPath.'/'.$f;
     }
     return false;
 }
 
 
 function zm_changeMonitorStatus($access_token, $function) {   
+    db_setGlobal('monitor_state', $function); return;
     $curl = curl_init();
     curl_setopt_array($curl, array(
     CURLOPT_URL => 'http://localhost/zm/api/monitors/1.json?token=' . $access_token,

@@ -138,20 +138,18 @@ function db_addUser($user_id) {
     if ($conn->connect_error) {
         http_response_code(500); die("error connectSQL: " . $conn->connect_error);
     } 
-    $sql = 'INSERT INTO users (id, can_add_users) VALUES 
-        ('.$user_id.',"'.'0'.'")'; 
+    $sql = 'INSERT INTO users (id, can_add_users) VALUES ('.$user_id.',"'.'0'.'")'; 
     if ( !$conn->query($sql) ) { http_response_code(500); die(); }
     $conn->close();
 }
 
 
-function db_addChat($chat_id) {
+function db_addChat($chat_id, $user_id) {
     $conn = new mysqli(SQL_SERVERNAME, SQL_USER, SQL_PASS, SQL_DBNAME);
     if ($conn->connect_error) {
         http_response_code(500); die("error connectSQL: " . $conn->connect_error);
     } 
-    $sql = 'INSERT INTO chats (id) VALUES 
-        ('.$chat_id.')'; 
+    $sql = 'INSERT INTO chats (id, user_id) VALUES ('.$chat_id.','.$user_id.')'; 
     if ( !$conn->query($sql) ) { http_response_code(500); die(); }
     $conn->close();
 }
